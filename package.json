@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/main.ts",
   "scripts": {
-    "start": "node --loader ts-node/esm ./src/main.ts",
+    "start": "ts-node src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,16 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
-    "esm": "^3.2.25",
-    "express": "^4.17.1",
     "google-spreadsheet": "^3.1.15",
-    "googleapis": "^39.2.0",
-    "nodemon": "^2.0.12",
-    "request": "^2.88.2",
     "ts-node": "^10.2.0"
   },
   "devDependencies": {
-    "@types/node": "^16.4.13",
     "typescript": "^4.3.5"
   }
 }
