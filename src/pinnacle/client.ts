@@ -13,12 +13,12 @@ export default class Client {
     public matches: Array<Match> = [];
 
     constructor(config: any) {
-        this.auth = new AuthData(config["x-api-key"], config["x-device-uuid"]);
-        this.password = config["password"];
-        this.username = config["username"];
-        this.password = config["password"];
-        this.trustcode = config["trustcode"];
-        this.url = config["url"];
+        this.auth = new AuthData(config.xapikey, config.xdeviceuuid);
+        this.password = config.password;
+        this.username = config.username;
+        this.password = config.password;
+        this.trustcode = config.trustcode;
+        this.url = config.url;
     }
 
     get_token() {
@@ -42,6 +42,8 @@ export default class Client {
     }
 
     get_dota_matches() {
+        this.matches = [];
+
         let params = {
             headers: {
                 "x-api-key": this.auth.xapikey,

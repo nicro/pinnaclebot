@@ -13,6 +13,10 @@
   "dependencies": {
     "axios": "^0.21.1",
     "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "google-spreadsheet": "^3.1.15",
+    "googleapis": "^39.2.0",
+    "nodemon": "^2.0.12",
     "request": "^2.88.2",
     "ts-node": "^10.2.0"
   },
