@@ -60,6 +60,7 @@ export default class Client {
                     res.data[i].participants[0].name,
                     res.data[i].participants[1].name);
                 this.matches.push(match);
+                //console.log(res.data[i]);
                 await match.get_coefficients();
             }
             //this.matches.forEach(el => el.coefficients.forEach(console.log));
@@ -67,5 +68,9 @@ export default class Client {
         .catch((error : Error) => { return error.name });
     }
 
+    print_single_match_coefficients(id: number) {
+            let m = new Match(this.url, this.auth, id, "team1", "team2");
+            m.get_coefficients().then(() => m.print_coefficients());
+    }
 
 };

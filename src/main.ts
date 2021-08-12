@@ -1,6 +1,7 @@
 import fs from "fs";
 import axios from "axios";
 import Client from "./modules/client"
+import Match from "./modules/match"
 
 let configRaw = fs.readFileSync('config.json');
 let config = JSON.parse(configRaw as any as string);
