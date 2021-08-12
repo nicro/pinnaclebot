@@ -1,0 +1,23 @@
+{
+  "name": "pinnaclebot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "node --loader ts-node/esm ./src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "esm": "^3.2.25",
+    "request": "^2.88.2",
+    "ts-node": "^10.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.4.13",
+    "typescript": "^4.3.5"
+  }
+}
