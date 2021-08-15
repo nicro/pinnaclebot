@@ -1,85 +1,42 @@
-import axios from "axios";
-import internal from "stream";
-import AuthData from "./authdata";
-import Coefficient from "./coefficient";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { Matchup, Coefficient } from "./matchup";
 
 export default class Match {
-    public url: string
-    public auth: AuthData
-
+    public http: AxiosInstance
     public id: number;
     public homeParticipant: string;
     public awayParticipant: string;
+    public matchups: Array<Matchup> = [];
 
-    public coefficients: Array<Coefficient> = [];
-
-    constructor(url: string, auth: AuthData, 
+    constructor(http: AxiosInstance, 
         id: number, homeParticipant: string, awayParticipant: string) 
     {
-        this.url = url;
-        this.auth = auth;
-
+        this.http = http;
         this.id = id;
         this.homeParticipant = homeParticipant;
         this.awayParticipant = awayParticipant;
-
-        //console.log(this.id + " " + this.homeParticipant + " " + this.awayParticipant + "");
     }
 
-    print_coefficients() {
-        console.log(`Match ${this.homeParticipant} vs ${this.awayParticipant}: ${this.id}`)
-        this.coefficients.forEach(coef => {
-            console.log(`${coef.type_name()} - ${coef.map_name()}: 
-            ${coef.homePoints} => ${coef.homePrice} 
-            ${coef.awayPoints} => ${coef.awayPrice}`)
+    print_coefficients() 
+    {
+        console.log(`Match ${this.id}: `);
+        this.matchups.forEach((mu: Matchup) => {
+            mu.coefficients.forEach((coef: Coefficient) => {
+                console.log(`[${mu.map_name()} - ${mu.type_name()}] ${coef.designation || ""} ${coef.points || ""}: ${coef.price || ""}`);
+            })            
         });
     }
 
-    get_coefficients() {
-        return this.get_related()
-        .then(() => this.get_related_straight());
-    }
-
-    get_related() {
-        let params = {
-            headers: {
-                "x-api-key": this.auth.xapikey,
-                "x-device-uuid": this.auth.xdeviceuuid,
-                "x-session": this.auth.xsession
-            }
-        };
-
-        return axios.get(this.url + `/matchups/${this.id}/related`, params)
-        .then((res: any) => {
-            //console.log(this.id + " " + res.data.length);
-        })
-        .catch(e => console.log(e.message));
-    }
-
-    get_related_straight() {
-        let params = {
-            headers: {
-                "x-api-key": this.auth.xapikey,
-                "x-device-uuid": this.auth.xdeviceuuid,
-                "x-session": this.auth.xsession
-            }
-        };
-
-        return axios.get(this.url + `/matchups/${this.id}/markets/related/straight`, params)
-        .then((res: any) => { 
+    get_matchups() {
+        return this.http.get(`/matchups/${this.id}/markets/related/straight`)
+        .then((res: AxiosResponse<any>) => {
             res.data.forEach((element : any) => {
-                this.coefficients.push(new Coefficient(
-                    element["cutoffAt"],
-                    element["type"],
-                    element["period"],
-                    element["prices"][0]["points"],
-                    element["prices"][1]["points"],
-                    element["prices"][0]["price"],
-                    element["prices"][1]["price"]
-                    )
-                );
+                let coefs: Array<Coefficient> = [];
+                element.prices.forEach((price : any) => {
+                    coefs.push(new Coefficient(price.designation, price.price, price.points));
+                });
+                this.matchups.push(new Matchup(element.cutoffAt, element.type, element.period, coefs));
             });
         })
-        .catch(e => console.log(e.message));
     }
 }

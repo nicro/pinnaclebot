@@ -3,22 +3,14 @@ import Client from "./pinnacle/client";
 
 const config = require('../config.json');
 
-let ss = new SpreadSheet(config.google);
+//let ss = new SpreadSheet(config.google);
 let client = new Client(config.pinnacle);
 
-let synchronize = async () => {
-    await client.get_dota_matches();
-    client.matches[0].print_coefficients();
-    //await ss.group(4, 6);
-}
-
 (async () => {
-    await client.get_token();
-    console.log(`x-session retrieved: ${client.auth.xsession}\n`);
-
-    await ss.auth();
-    console.log(`spreadsheet authorized`);
-
-    await synchronize();
-    //setInterval(synchronize, 60 * 1000); // 60 * 1000 milsec
+    await client.auth();
+    await client.get_all_leagues(12, "CS:GO", "League of Legends", "Valorant", "Dota 2");
+    await client.get_all_matches();
+    console.log("matches fetched");
+    await client.leagues[1].get_all_matchups();
+    console.log("matchups fetched");
 })()

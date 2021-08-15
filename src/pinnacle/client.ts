@@ -1,78 +1,76 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import Match from "./match";
-import AuthData from "./authdata"
-import { StringLiteralLike } from "typescript";
+import League from "./league";
+import { beautiful_date, startsWithOneOf } from "../utils";
 
 export default class Client {
-    public auth: AuthData;
-    public password: string;
-    public username: string;
-    public trustcode: string;
-    public url: string;
-
-    public matches: Array<Match> = [];
+    public http: AxiosInstance;
+    public config: any;
+    public leagues: Array<League> = [];
 
     constructor(config: any) {
-        this.auth = new AuthData(config.xapikey, config.xdeviceuuid);
-        this.password = config.password;
-        this.username = config.username;
-        this.password = config.password;
-        this.trustcode = config.trustcode;
-        this.url = config.url;
+        this.config = config;
+        this.http = axios.create({
+            baseURL: this.config.url
+        });
     }
 
-    get_token() {
+    auth() {
+        let params = {
+            headers: {
+                "x-api-key": this.config.xapikey,
+                "x-device-uuid": this.config.xdeviceuuid
+            }
+        }
+
         let postData = {
-            "username": this.username,
-            "password": this.password,
-            "captchaToken": "",
-            "trustCode": this.trustcode
-        };
-        
-        let params = {
-            headers: {
-                "x-api-key": this.auth.xapikey,
-                "x-device-uuid": this.auth.xdeviceuuid
-            }
+            "username": this.config.username,
+            "password": this.config.password,
+            "trustCode": this.config.trustcode
         };
 
-        return axios.post(this.url + "/sessions", postData, params)
-        .then((res : any) => { this.auth.xsession = res.data.token })
-        .catch((error : Error) => { return error.name });
+        return this.http.post("/sessions", postData, params)
+        .then((res : any) => {
+            this.http.defaults.timeout = 1000;
+            this.http.defaults.headers = {
+                "x-api-key": this.config.xapikey,
+                "x-device-uuid": this.config.xdeviceuuid,
+                "x-session": res.data.token,
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            };
+            console.log(`Session for user ${res.data.username} found, created at ${beautiful_date(new Date(res.data.createdAt))}`);
+            console.log("Session-id: " + res.data.token);
+        })
+        .catch((error : Error) => { console.log(error) });
     }
 
-    get_dota_matches() {
-        this.matches = [];
-
-        let params = {
-            headers: {
-                "x-api-key": this.auth.xapikey,
-                "x-device-uuid": this.auth.xdeviceuuid,
-                "x-session": this.auth.xsession
-            }
-        };
-
-        return axios.get(this.url + "/sports/12/matchups?withSpecials=false", params)
-        .then(async (res : any) => { 
-            for (let i = 0; i < Math.min(res.data.length, 10); i++)
-            {
-                var match = new Match(
-                    this.url, this.auth,
-                    res.data[i].id,
-                    res.data[i].participants[0].name,
-                    res.data[i].participants[1].name);
-                this.matches.push(match);
-                //console.log(res.data[i]);
-                await match.get_coefficients();
-            }
-            //this.matches.forEach(el => el.coefficients.forEach(console.log));
-         })
-        .catch((error : Error) => { return error.name });
+    get_all_leagues(id: number = 12, ...filters: string[]) {
+        this.leagues = [];
+        return this.http.get(`/sports/${id}/leagues?all=false`)
+        .then(res => {
+            res.data.forEach((l : any) => {
+                    if (startsWithOneOf(l.name, filters)) {
+                        this.leagues.push(new League(this.http, l.id, l.name));
+                    }
+                });
+        })
+        .catch(console.log);
     }
 
-    print_single_match_coefficients(id: number) {
-            let m = new Match(this.url, this.auth, id, "team1", "team2");
-            m.get_coefficients().then(() => m.print_coefficients());
+    async get_all_matches()
+    {
+        let promises : any = [];
+        this.leagues.forEach((league : League) => promises.push(league.get_matches()));
+        return Promise.allSettled(promises);
+    }
+
+    async print_single_match_coefficients(id: number) 
+    {
+        let match = new Match(this.http, id, "team1", "team2");
+        await match.get_matchups();
+        match.print_coefficients();
     }
 
 };
